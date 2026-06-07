@@ -1,0 +1,23 @@
+[project]
+name = "treap"
+version = "0.1.0"
+description = "A set implemented using a treap (tree + heap)"
+requires-python = ">=3.13"
+
+[tool.ruff]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.155.2",
+    "pytest>=9.0.3",
+    "ruff>=0.15.16",
+    "ty==0.0.44",
+]
