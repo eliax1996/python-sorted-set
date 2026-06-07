@@ -1,7 +1,6 @@
 """Comparison benchmark: treap vs stdlib vs sortedcontainers."""
 
 import bisect
-import math
 import random
 from time import perf_counter
 
@@ -54,17 +53,19 @@ def run_comparison(sizes: list[int], samples: int = 3, seed: int = 42) -> None:
         t_sc = bench_sortedcontainers(elements)
         t_bisect = bench_bisect_list(elements)
 
-        results.append({
-            "n": n,
-            "treap_us": t_treap * 1_000_000,
-            "sc_us": t_sc * 1_000_000,
-            "bisect_us": t_bisect * 1_000_000,
-            "treap_per_op_us": t_treap * 1_000_000 / n,
-            "sc_per_op_us": t_sc * 1_000_000 / n,
-            "bisect_per_op_us": t_bisect * 1_000_000 / n,
-            "treap_vs_sc": t_treap / t_sc if t_sc > 0 else float("inf"),
-            "treap_vs_bisect": t_treap / t_bisect if t_bisect > 0 else float("inf"),
-        })
+        results.append(
+            {
+                "n": n,
+                "treap_us": t_treap * 1_000_000,
+                "sc_us": t_sc * 1_000_000,
+                "bisect_us": t_bisect * 1_000_000,
+                "treap_per_op_us": t_treap * 1_000_000 / n,
+                "sc_per_op_us": t_sc * 1_000_000 / n,
+                "bisect_per_op_us": t_bisect * 1_000_000 / n,
+                "treap_vs_sc": t_treap / t_sc if t_sc > 0 else float("inf"),
+                "treap_vs_bisect": t_treap / t_bisect if t_bisect > 0 else float("inf"),
+            }
+        )
 
     # Print table
     header = (
@@ -94,3 +95,35 @@ def run_comparison(sizes: list[int], samples: int = 3, seed: int = 42) -> None:
 def test_comparison() -> None:
     sizes = [100, 1_000, 10_000, 50_000]
     run_comparison(sizes, samples=1)
+
+
+def test_comparison_large() -> None:
+    """Benchmark at 5M elements (treap vs sortedcontainers only — bisect is O(n²))."""
+    n = 5_000_000
+    rng = random.Random(42)
+    elements = rng.sample(range(n * 10), n)
+
+    s: TreapSet = TreapSet()
+    t0 = perf_counter()
+    for x in elements:
+        s.add(x)
+    t_treap = perf_counter() - t0
+
+    s2: SortedSet = SortedSet()
+    t0 = perf_counter()
+    for x in elements:
+        s2.add(x)
+    t_sc = perf_counter() - t0
+
+    us_treap = t_treap / n * 1_000_000
+    us_sc = t_sc / n * 1_000_000
+    ratio = t_treap / t_sc
+
+    print("\n── 5M Comparison (bisect skipped — would take ~45 min) ──\n")
+    print(f"{'':>20} {'total':>10} {'µs/op':>10}")
+    print(f"{'sortedcontainers':>20} {t_sc:>8.3f}s {us_sc:>8.3f}µs")
+    print(f"{'treap':>20} {t_treap:>8.3f}s {us_treap:>8.3f}µs")
+    print(f"\ntreap is {ratio:.1f}x slower than sortedcontainers at n=5M\n")
+
+    assert t_treap < 120.0, f"treap took {t_treap:.1f}s, expected < 120s"
+    assert t_sc < 30.0, f"sortedcontainers took {t_sc:.1f}s, expected < 30s"

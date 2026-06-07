@@ -1,5 +1,4 @@
 from collections.abc import Iterable, Iterator
-from multiprocessing import Value
 from re import A
 from typing import Any, Generic, Protocol, Self, TypeVar, cast, runtime_checkable
 
@@ -155,13 +154,50 @@ class Set(Generic[C]):
             else:
                 raise ValueError(f"Implementation error, cannot find the child of {i}")
 
-    def binary_treap(self) -> Iterable[int]:
-        for num in self.binary_vector:
-            # ignoring if for now, feistel can return a different element from a range no matter whats the domain
-            # of the data; for now lets keep hardcoded for integers
-            yield self.permuter.random_index(num)  # pyright: ignore[reportArgumentType]
+    def __iter__(self) -> Iterator[C]:
+        # not reusing the ReusableStack becuse would require
+        # syncronization between the methods using .reset() and this
+        # Since the iterator isn't closed until we finish iterating all the elements
+        # we cannot do such guarantee. Note that also modify the set while iterating
+        # breaks the iteration process, like in the c++ iterators.
+        if self.root == self.SENTINEL:
+            return iter(())
 
-        # todo: missing the heap based balancing
+        stack = []
+        ptr = self.root
+
+        # add all the left children of the node
+        while ptr != self.SENTINEL:
+            stack.append(ptr)
+            ptr = self.left_children[ptr]
+
+        while stack:
+            # by definition on the right there is always the smallest
+            ptr = stack.pop()
+            yield self.binary_vector[ptr]
+
+            if self.right_children[ptr] != self.SENTINEL:
+                ptr = self.right_children[ptr]
+                while ptr != self.SENTINEL:
+                    stack.append(ptr)
+                    ptr = self.left_children[ptr]
+
+    def iterate_right(self, key: C) -> Iterator[C]:
+        stack = []
+        ptr = self.root
+
+        while True:
+            if self.binary_vector[ptr] == key:
+                break
+            elif self.binary_vector[ptr] > key:
+                ptr = self.left_children[ptr]
+            else:
+                ptr = self.right_children[ptr]
+
+            if ptr == self.SENTINEL:
+                return False
+
+
 
     def remove(self, elem: C) -> None: ...
     def discard(self, elem: C) -> None: ...
@@ -227,5 +263,4 @@ class Set(Generic[C]):
 
     # --- Iteration & representation ---
 
-    def __iter__(self) -> Iterator[C]: ...
     def __repr__(self) -> str: ...
