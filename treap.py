@@ -187,7 +187,7 @@ class Set(Generic[C]):
         ptr = self.root
 
         while True:
-            if self.binary_vector[ptr] == key:
+            if key <= self.binary_vector[ptr]:
                 break
             elif self.binary_vector[ptr] > key:
                 ptr = self.left_children[ptr]

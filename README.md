@@ -103,18 +103,20 @@ between 0.45 and 0.76), insertion is O(log n). The per-insertion time goes from
 
 Key takeaways:
 
-- **sortedcontainers** (C B-tree) is consistently ~7–14× faster — expected for
-  a pure-Python learning implementation vs an optimised C extension.
-- **bisect.insort** into a list starts fast at small n (cheap array shifts), but
-  O(n) per insertion catches up brutally. By 5M elements it takes **45 minutes**
-  vs **70 seconds** for the treap.
-- Both the treap and sortedcontainers scale O(log n). The treap's µs/op / log₂(n)
-  stays between 0.39 and 0.63 across all sizes; sortedcontainers stays between
-  0.03 and 0.09. The gap is a constant factor from Python overhead (function
-  calls, attribute access, Feistel permutation) vs C with a cache-friendly
-  B-tree layout.
+- **sortedcontainers** is pure Python — it uses a segmented list (B-tree-like)
+  with a load factor: `bisect` (C in CPython) over a `_maxes` array to find
+  the right segment, then `insort` into a small sorted list. It's ~7–14× faster
+  than the treap because each operation does minimal Python-level work — most
+  time is spent in CPython's C-level `bisect` and `memmove`.
+- **bisect.insort** into a plain list is fast at small n (cheap array shifts),
+  but O(n) per insertion catches up brutally. By 5M elements it takes **45
+  minutes** vs **70 seconds** for the treap.
+- Both the treap and sortedcontainers scale O(log n). The difference is a
+  constant factor: the treap makes more Python function calls per operation
+  (rotation logic, Feistel permutation) while sortedcontainers shifts work
+  onto C-level `bisect` and small list operations.
 - For a from-scratch Python implementation, beating bisect by **38×** at 5M
-  while matching its asymptotic behaviour is the win.
+  while matching its asymptotic behaviour is the real win.
 
 ## What's implemented
 
