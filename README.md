@@ -89,6 +89,28 @@ The key column is **µs/op / log₂(n)** — if it's roughly constant (here it s
 between 0.45 and 0.76), insertion is O(log n). The per-insertion time goes from
 4.3µs (n=50) to 7.6µs (n=100k) — less than 2x slower for 2000x more elements.
 
+### How it compares
+
+Against established implementations, this treap is **~10–14× slower** than
+`sortedcontainers.SortedSet` and **~3–46× slower** than `bisect.insort` into
+a plain list (depending on size):
+
+```
+       n    treap (µs)      sc (µs)   bisect (µs)    treap/sc   treap/bisect
+     100        501.9µs       45.9µs        10.9µs       10.9x          46.0x
+    1000       5483.6µs      391.6µs       156.8µs       14.0x          35.0x
+   10000      64755.1µs     5325.5µs      5517.0µs       12.2x          11.7x
+   50000     354422.2µs    30249.2µs    114548.6µs       11.7x           3.1x
+```
+
+`sortedcontainers` is a highly optimised C extension using a B-tree — it wins
+on raw throughput. `bisect.insort` into a list is O(n) per insertion due to
+array shifting, so it falls behind at larger sizes. The treap splits the
+difference: slower per-operation than the optimised library, but with the
+correct O(log n) scaling. This was a learning project — the gap is mostly
+Python overhead (function calls, attribute access) that a C implementation
+would eliminate.
+
 ## What's implemented
 
 | Operation | Status |

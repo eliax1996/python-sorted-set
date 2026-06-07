@@ -3,6 +3,9 @@ name = "treap"
 version = "0.1.0"
 description = "A set implemented using a treap (tree + heap)"
 requires-python = ">=3.13"
+dependencies = [
+    "sortedcontainers>=2.4.0",
+]
 
 [tool.ruff]
 
