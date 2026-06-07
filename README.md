@@ -24,6 +24,15 @@ bijective function that maps each value to a pseudo-random index in `[0, 2ⁿ)`.
 Since the permutation is a bijection, no two values collide on priority, and
 the mapping is deterministic — no need to store per-node randomness.
 
+> **Note:** The current Feistel network only works with integers. But the
+> underlying principle extends to any data structure: if you can design a
+> bijection between your data type and a fixed set of bits, the network
+> shuffles those bits and maps the result back to a valid object. Every bit
+> sequence projects to another random bit sequence in the same space — no two
+> distinct inputs map to the same output, and every output value in the domain
+> is covered. This is what makes it a **permutation** over the entire space:
+> bijection + surjection onto the codomain.
+
 ### Data structure: array-backed tree
 
 The tree is stored in three parallel arrays:
